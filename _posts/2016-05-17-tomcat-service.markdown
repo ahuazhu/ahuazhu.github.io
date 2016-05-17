@@ -1,9 +1,11 @@
 ---
 layout: post
-title:  "/etc/init.d/tomcat"
+title:  "tomcat service"
 date:   2016-05-17 09:00:00 +0800
 categories: 基础设施搭建
 ---
+
+/etc/init.d/tomcat
 
 {% highlight python %}
 
