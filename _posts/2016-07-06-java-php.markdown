@@ -5,13 +5,30 @@ date:   2016-07-06 21:00:00 +0800
 categories: 基础设施搭建
 ---
 
-## Java Call Php
 ![Java Call Php](/static/img/Java_Php.png)
+
+## Java Call Php
+扩展PigeonClient功能，增加php调用Method。当Method == "php" 时，采用http方式调用Php服务，Php端不需任何更改。
+
 
 ## Php Call Java
 
 ### Solution 1
+
 ![Php Call Java](/static/img/Php_Java1.png)
 
+在PHP机器上部署Agent，Agent会初始化Pigeon Client，并打开一个端口监听HTTP请求，Agent解析HTTP请求（只支持GET），将其转换成Pigeon请求，通过Pigeon Client发送给Pigeon Service。
+缺点：需要运维在每台机器上部署Agent 
+
 ### Solution 2
+
 ![Php Call Java](/static/img/Php_Java2.png)
+
+由于Pigeon已经支持HTTP请求，运维需架设nginx方向代理。Php通过nginx调用Pigeon Service。
+
+缺点：
+
+1. 需要架设nginx；
+2. 无法使用Pigeon的客户端LB优势，如warm up，无法指定/制定LB策略，不支持泳道；
+3. 由于走http协议和json序列化，效率较低；
+
