@@ -17,7 +17,7 @@ CAT是一个实时监控系统，它更侧重于Java应用的监控，目前也�
 
 ## CAT架构
 CAT采用日志收集，分析的方式实现。客户端负责收集系统运行日志，上传至服务端，服务端分析日志形成报表供查询或触发报警。
-
+![CAT-Arch](/static/img/CAT-arch.png)
 1.	CAT-Client收集消息，将消息编码经TCP逐条POST到CAT-Server；
 2.	CAT-Server接收消息，解码后交给Analyzer逐条分析，产生报表；
 3.	报表保存在MySQL中，原始消息进Hadoop；
