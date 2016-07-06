@@ -9,7 +9,7 @@
 title: 朱正文
 email: ahuazhu@gmail.com
 description: > # this means to ignore newlines until "baseurl:"
-  生命不息，代码不止。
+  生命不息，搬砖不止。
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "http://www.ahuazhu.com" # the base hostname & protocol for your site
 #twitter_username: jekyllrb
