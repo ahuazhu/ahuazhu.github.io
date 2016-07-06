@@ -1,0 +1,17 @@
+---
+layout: post
+title:  "Java Php RPC"
+date:   2016-07-06 21:00:00 +0800
+categories: 基础设施搭建
+---
+
+## Java Call Php
+![Java Call Php](/static/img/Java_Php.png)
+
+## Php Call Java
+
+### Solution 1
+![Php Call Java](/static/img/Php_Java1.png)
+
+### Solution 2
+![Php Call Java](/static/img/Php_Java2.png)
