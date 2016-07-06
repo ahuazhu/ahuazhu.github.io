@@ -25,12 +25,12 @@ CAT采用日志收集，分析的方式实现。客户端负责收集系统运�
 
 ## CAT客户端设计（Java）
 
- ### 1. CAT消息
+### 1. CAT消息
  CAT 消息分为：Event ,Transaction,, Heartbeat三种。
  
  * Event: 用来统计某类事件发生的次数，比如统计Cache失效/命中次数，相比Transaction，Event不支持事件的持续时间
 
- {% highlight java %}
+ {% highlight java linenos %}
 Class Event{
 	String m_type;
 	String m_name;
@@ -43,7 +43,7 @@ Class Event{
 
 * Transaction：用来跟踪程序运行的trace。Transaction支持嵌套，一个Transaction可以嵌套另一个Transaction，或Event。如一次URL访问，开始时间，结束时间。期间访问Cache命中或否，在某个时间戳调用另一个服务或DB。
 
- {% highlight java %}
+ {% highlight java linenos %}
 Class Transaction {
 	String m_type;
 	String m_name;
@@ -64,7 +64,7 @@ Class Transaction {
 CAT采用代码侵入的方式打点，业务在适当的代码位置调用Transaction 开始，然后在业务结束的时候，调用Transaction结束。
 
 
- {% highlight java %}
+ {% highlight java linenos %}
  	 Transaction t = Cat.getProducer().newTransaction("your transaction type", "your transaction name");
      try {
                  yourBusinessOperation();
@@ -87,13 +87,13 @@ CAT采用代码侵入的方式打点，业务在适当的代码位置调用Trans
 ### 3. 编码
 为了将CAT-Client采集到的消息树上传到服务端去分析，Client和Server约定好了编码方式，Client将消息树采用内部定义的PlainTextMessageCodec编码方式。每条消息编码分两部分，Header和Body。Header格式
 
-{% highlight %}
+{% highlight java %}
 LEN|VERSION|TAB|DOMAIN|TAB|HOST_NAME|TAB|IP|TAB|THREAD_GROUP_NAME|TAB|THREAD_ID|TAB|MESSAGE_ID|TAB|PARENT_MESSAGE_ID|TAB|ROOT_MESSAGE_ID|TAB|SESSION_TOKEN|LF
 {% endhighlight %}
 
 Body部分编码后如：
 
-{% highlight %}
+{% highlight java %}
 t21:09:11.255	PigeonService	shopOwnerServ...		
   E21:09:11.255	PigeonService.app	tp-dock-facade-service	 	
   E21:09:11.255	PigeonService.client	10.101.12.108	 	
