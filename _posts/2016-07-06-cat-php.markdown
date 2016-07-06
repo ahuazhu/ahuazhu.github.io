@@ -1,0 +1,123 @@
+---
+layout: post
+title:  "Cat PHP Client"
+date:   2016-05-11 09:00:00 +0800
+categories: 基础设施搭建
+---
+
+## CAT是什么
+CAT是一个实时监控系统，它更侧重于Java应用的监控，目前也有其他语言版本（.net），能够跟各种流行的中间件框架集成（MVC框架、RPC框架、数据库框架、缓存框架等），实现对应用各层级的系统运行状况监控。
+
+## CAT能给我们带来什么
+* 细致的性能监控
+* 精确的异常记录
+* 实时的系统状态
+* 自定义业务指标
+* 及时的异常告警
+
+## CAT架构
+CAT采用日志收集，分析的方式实现。客户端负责收集系统运行日志，上传至服务端，服务端分析日志形成报表供查询或触发报警。
+
+1.	CAT-Client收集消息，将消息编码经TCP逐条POST到CAT-Server；
+2.	CAT-Server接收消息，解码后交给Analyzer逐条分析，产生报表；
+3.	报表保存在MySQL中，原始消息进Hadoop；
+4.	用户通过WEB访问报表，报警业务根据报表发报警；
+
+## CAT客户端设计（Java）
+
+ ### 1. CAT消息
+ CAT 消息分为：Event ,Transaction,, Heartbeat三种。
+ 
+ * Event: 用来统计某类事件发生的次数，比如统计Cache失效/命中次数，相比Transaction，Event不支持事件的持续时间
+
+ {% highlight java %}
+Class Event{
+	String m_type;
+	String m_name;
+	String m_status = "unset";
+	long m_timestampInMillis;
+	CharSequence m_data;
+	boolean m_completed;
+}
+{% endhighlight %}
+
+* Transaction：用来跟踪程序运行的trace。Transaction支持嵌套，一个Transaction可以嵌套另一个Transaction，或Event。如一次URL访问，开始时间，结束时间。期间访问Cache命中或否，在某个时间戳调用另一个服务或DB。
+
+ {% highlight java %}
+Class Transaction {
+	String m_type;
+	String m_name;
+	String m_status = "unset";
+	long m_timestampInMillis;
+	CharSequence m_data;
+	boolean m_completed;
+	long m_durationInMicro ;
+	List<Message> m_children;
+	boolean m_standalone;
+	long m_durationStart;
+}
+{% endhighlight %}
+
+* Heartbeat: Heartbeta表示程序内定期产生的统计信息, 如CPU%, MEM%, 连接池状态, 系统负载等。
+
+### 2.	采集 
+CAT采用代码侵入的方式打点，业务在适当的代码位置调用Transaction 开始，然后在业务结束的时候，调用Transaction结束。
+
+
+ {% highlight java %}
+ 	 Transaction t = Cat.getProducer().newTransaction("your transaction type", "your transaction name");
+     try {
+                 yourBusinessOperation();
+                Cat.getProducer().logEvent("your event type", "your event name", Event.SUCCESS, "keyValuePairs")
+                t.setStatus(Transaction.SUCCESS);
+     } catch (Exception e) {
+            Cat.getProducer().logError(e);//用log4j记录系统异常，以便在Logview中看到此信息
+            t.setStatus(e);
+            throw e; 
+            	  (CAT所有的API都可以单独使用，也可以组合使用，比如Transaction中嵌套Event或者Metric。)
+                  (注意如果这里希望异常继续向上抛，需要继续向上抛出，往往需要抛出异常，让上层应用知道。)
+                  (如果认为这个异常在这边可以被吃掉，则不需要在抛出异常。)
+     } finally {
+           t.complete();
+     }
+   {% endhighlight %}
+
+   发生远程调用时，为了能串联调用方和提供方的事务，双发需要交换MessgeId形成父子关系。
+
+### 3. 编码
+为了将CAT-Client采集到的消息树上传到服务端去分析，Client和Server约定好了编码方式，Client将消息树采用内部定义的PlainTextMessageCodec编码方式。每条消息编码分两部分，Header和Body。Header格式
+
+{% highlight %}
+LEN|VERSION|TAB|DOMAIN|TAB|HOST_NAME|TAB|IP|TAB|THREAD_GROUP_NAME|TAB|THREAD_ID|TAB|MESSAGE_ID|TAB|PARENT_MESSAGE_ID|TAB|ROOT_MESSAGE_ID|TAB|SESSION_TOKEN|LF
+{% endhighlight %}
+
+Body部分编码后如：
+
+{% highlight %}
+t21:09:11.255	PigeonService	shopOwnerServ...		
+  E21:09:11.255	PigeonService.app	tp-dock-facade-service	 	
+  E21:09:11.255	PigeonService.client	10.101.12.108	 	
+  E21:09:11.255	PigeonService.QPS	S11	 	
+  t21:09:11.255	SQL	ShopBD.queryBdOfShops		
+    E21:09:11.256	SQL.Database	jdbc:mysql://10...	 	shopbd-n2-read
+    E21:09:11.256	SQL.Method	Select	 	["101","1"...
+    E21:09:11.256	SQL.Length	<= 1K	 	
+  T21:09:11.256	SQL	ShopBD.queryBdOfShops	 	1.45ms SELECT Id...
+T21:09:11.256	PigeonService	shopOwnerServic...	 	1.00ms SourceApp=tp...
+{% endhighlight %}
+
+## PHP接入方案
+1. 方案1：
+采用PHP语言参考Java版本实现，实现Cat-Client SDK.所需要实现的接口参考：
+https://github.com/dianping/cat/blob/master/cat-client/src/main/java/com/dianping/cat/message/Message.java
+https://github.com/dianping/cat/blob/master/cat-client/src/main/java/com/dianping/cat/message/spi/MessageTree.java
+
+问题：PHP异常时可能捕获不到错误堆栈，对CAT的功能大打折扣。
+
+2. 方案2
+采用C语言实现，类似方案1，据说可以捕获到堆栈。（待调研）
+问题：复杂度相对较高
+
+3. 方案3
+采用zend api 获取runtime 调用堆栈。
+问题：分析zend的调用关系相对复杂。性能有损耗。
