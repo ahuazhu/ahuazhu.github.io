@@ -124,3 +124,7 @@ https://github.com/dianping/cat/blob/master/cat-client/src/main/java/com/dianpin
 3. 方案3
 采用zend api 获取runtime 调用堆栈。
 问题：分析zend的调用关系相对复杂。性能有损耗。
+
+## 节奏
+
+TODO

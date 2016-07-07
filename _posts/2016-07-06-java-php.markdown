@@ -32,3 +32,6 @@ categories: 基础设施搭建
 2. 无法使用Pigeon的客户端LB优势，如warm up，无法指定/制定LB策略，不支持泳道；
 3. 由于走http协议和json序列化，效率较低；
 
+
+## 节奏
+TODO
