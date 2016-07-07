@@ -69,7 +69,7 @@ CAT采用代码侵入的方式打点，业务在适当的代码位置调用Trans
  {% highlight java linenos %}
 Transaction t = Cat.getProducer().newTransaction("your transaction type", "your transaction name");
 try {
-         yourBusinessOperation();
+        yourBusinessOperation();
         Cat.getProducer().logEvent("your event type", "your event name", Event.SUCCESS, "keyValuePairs")
         t.setStatus(Transaction.SUCCESS);
 } catch (Exception e) {
@@ -115,7 +115,6 @@ T21:09:11.256	PigeonService	shopOwnerServic...	 	1.00ms SourceApp=tp...
 采用PHP语言参考Java版本实现，实现Cat-Client SDK.所需要实现的接口参考：
 https://github.com/dianping/cat/blob/master/cat-client/src/main/java/com/dianping/cat/message/Message.java
 https://github.com/dianping/cat/blob/master/cat-client/src/main/java/com/dianping/cat/message/spi/MessageTree.java
-
 问题：PHP异常时可能捕获不到错误堆栈，对CAT的功能大打折扣。
 
 2. 方案2
